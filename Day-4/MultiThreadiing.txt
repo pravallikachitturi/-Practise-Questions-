@@ -1,0 +1,245 @@
+1. 
+i) Creating a thread using Thread class
+In this approach, a class extends the Thread class and overrides the run() method. A new thread is created by calling the start() method.
+class MyThread extends Thread {
+    public void run() {
+        System.out.println("Thread running");
+    }
+}
+
+MyThread t = new MyThread();
+t.start();
+Characteristics:
+Directly represents a thread, Simple to implement, Does not support multiple inheritance (since Java allows extending only one class), Not suitable for large-scale applications
+
+ ii) Creating a thread using Runnable interface
+In this approach, a class implements the Runnable interface and provides the implementation of the run() method. The Runnable object is then passed to a Thread.
+class MyTask implements Runnable {
+    public void run() {
+        System.out.println("Task running");
+    }
+}
+
+Thread t = new Thread(new MyTask());
+t.start();
+
+Characteristics:
+Separates task from thread, Allows the class to extend another class, More flexible than extending Thread, Still requires manual thread management.
+
+iii) Creating a thread using ExecutorService
+
+The ExecutorService framework manages a pool of threads and executes submitted tasks.
+
+ExecutorService executor = Executors.newFixedThreadPool(2);
+executor.submit(() -> System.out.println("Task executed"));
+executor.shutdown();
+Characteristics:
+Uses a thread pool, Automatically manages thread lifecycle, Supports task scheduling and future results, Highly scalable and efficient.
+ iv) ExecutorService is preferred in real-world applications because:
+It provides better performance through thread reuse
+Simplifies thread management
+Prevents excessive thread creation
+Improves application scalability and reliability
+
+2. i) The submit() method returns a Future<V> object.
+If a Callable<V> is submitted → returns Future<V> containing the result
+If a Runnable is submitted → returns Future<?> (result is usually null)
+
+Future<Integer> future = executor.submit(() -> 10 + 20);
+The Future represents the result of an asynchronous computation.
+
+ii) The result is retrieved using the get() method of the Future object.
+
+Integer result = future.get();
+System.out.println(result);
+The get() method:
+Returns the result when the task completes
+Throws checked exceptions (InterruptedException, ExecutionException)
+
+iii) If Future.get() is called before the task finishes execution, then:
+The calling thread blocks and waits
+It remains blocked until the task completes
+Once completed, the result is returned
+Example:
+
+Future<Integer> future = executor.submit(() -> {
+    Thread.sleep(2000);
+    return 100;
+});
+System.out.println("Waiting for result...");
+Integer result = future.get();  // blocks here
+System.out.println(result);
+
+3. In a multi-threaded program, multiple threads may access and modify shared resources at the same time. Without synchronization, this can lead to:
+
+Race conditions – threads interfere with each other
+Data inconsistency – incorrect or partial updates
+Unpredictable results – program behaves differently each time
+
+Purpose of Synchronization
+Synchronization ensures that:
+Only one thread at a time accesses critical sections of code
+Shared data remains consistent and reliable
+Thread execution becomes coordinated and safe
+
+synchronized void updateBalance() {
+    balance = balance + 100;
+}
+i) Purpose of wait() and notify()
+wait() and notify() are used for inter-thread communication.
+wait()
+Causes the current thread to release the lock
+Puts the thread into waiting state
+Waits until another thread calls notify() or notifyAll()
+
+notify()
+Wakes up one waiting thread
+Does not release the lock immediately
+Lock is released only after synchronized block ends
+
+ii) Producer–Consumer Problem
+Shared Resource
+class SharedResource {
+    private int data;
+    private boolean available = false;
+
+    synchronized void produce(int value) throws InterruptedException {
+        while (available) {
+            wait();   // wait if data already exists
+        }
+        data = value;
+        available = true;
+        System.out.println("Produced: " + data);
+        notify();    // notify consumer
+    }
+
+    synchronized int consume() throws InterruptedException {
+        while (!available) {
+            wait();   // wait if no data
+        }
+        available = false;
+        System.out.println("Consumed: " + data);
+        notify();    // notify producer
+        return data;
+    }
+}
+
+Explanation
+Producer waits if data is already produced
+Consumer waits if no data is available
+wait() pauses execution and releases the lock
+notify() wakes the waiting thread to continue execution 
+
+iii) wait() and notify() be called inside a synchronized block because :
+
+They operate on the object’s monitor (lock)
+🔹 The calling thread must own the lock before calling them
+🔹 Otherwise, Java throws IllegalMonitorStateException
+
+Correct Usage
+synchronized (obj) {
+    obj.wait();
+}
+ 
+4. Collections such as ArrayList and HashMap are not thread-safe because they do not provide internal synchronization. When multiple threads access and modify these collections simultaneously, it can result in:
+Race conditions, where operations interfere with each other
+Data inconsistency, such as lost updates
+Unpredictable behavior, including incorrect results
+Runtime exceptions, such as ConcurrentModificationException
+Corruption of internal data structures, especially during resizing operations
+These issues occur because operations like adding, removing, or resizing elements are not atomic and can be interrupted by other threads.
+i) One commonly used thread-safe collection in Java is:
+
+ConcurrentHashMap
+
+Other examples include:
+
+CopyOnWriteArrayList
+
+CopyOnWriteArraySet
+
+ConcurrentLinkedQueue
+
+ii) ConcurrentHashMap is preferred in high-concurrency environments where multiple threads frequently read and write data.
+
+Reasons for preferring ConcurrentHashMap:
+Uses fine-grained locking, allowing multiple threads to operate concurrently
+Offers better performance and scalability
+Allows concurrent reads and writes
+Does not lock the entire map for each operation
+Iterators are fail-safe, avoiding ConcurrentModificationException
+
+Limitations of Collections.synchronizedMap():
+Uses a single lock for the entire map
+Allows only one thread at a time to access the map
+Poor performance under heavy multithreading
+Iteration requires manual synchronization
+
+
+5. A deadlock in Java is a situation where two or more threads are permanently blocked, each waiting for a resource that is held by another thread. Since none of the threads can proceed, the program gets stuck indefinitely.
+i) Real-world example: Two people and two resources
+
+Person A holds Pen and waits for Notebook
+Person B holds Notebook and waits for Pen
+Neither person is willing to release what they have, so both are stuck forever — this is a deadlock.
+
+ii) class DeadlockExample {
+
+    private static final Object lock1 = new Object();
+    private static final Object lock2 = new Object();
+
+    public static void main(String[] args) {
+
+        Thread t1 = new Thread(() -> {
+            synchronized (lock1) {
+                System.out.println("Thread 1 acquired lock1");
+
+                try { Thread.sleep(100); } catch (InterruptedException e) {}
+
+                synchronized (lock2) {
+                    System.out.println("Thread 1 acquired lock2");
+                }
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            synchronized (lock2) {
+                System.out.println("Thread 2 acquired lock2");
+
+                try { Thread.sleep(100); } catch (InterruptedException e) {}
+
+                synchronized (lock1) {
+                    System.out.println("Thread 2 acquired lock1");
+                }
+            }
+        });
+
+        t1.start();
+        t2.start();
+    }
+}
+
+Thread 1 locks lock1 and waits for lock2
+Thread 2 locks lock2 and waits for lock1
+Both threads wait forever → deadlock
+
+iii) Lock Ordering (Resource Ordering)
+Ensure that all threads acquire locks in the same order.
+
+Example Prevention
+synchronized (lock1) {
+    synchronized (lock2) {
+        // safe code
+    }
+}
+If every thread locks lock1 first and then lock2, circular wait is avoided
+Other common deadlock prevention techniques
+Use timeouts (tryLock() in ReentrantLock)
+Avoid nested locks
+Minimize synchronized blocks
+Use higher-level concurrency utilities from java.util.concurrent
+
+
+
+
+

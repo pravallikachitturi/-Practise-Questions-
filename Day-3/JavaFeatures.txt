@@ -1,0 +1,191 @@
+1. A) In Java, you can restrict a generic type to numeric types only by using an upper bounded type parameter with the Number class. Syntax:
+<T extends Number> Ex: public static <T extends Number> double sum(Collection<T> numbers) {
+    double total = 0;
+    for (T num : numbers) {
+        total += num.doubleValue();
+    }
+    return total;
+}
+This ensures that only subclasses of Number (such as Integer, Double, Float, etc.) are allowed.
+
+B) The collection can hold objects of Number or any of its subclasses.
+
+When to use:
+i)When you only need to read values
+ii)When the method is a consumer of data
+Ex: public static double calculateSum(List<? extends Number> list) {
+    double sum = 0;
+    for (Number n : list) {
+        sum += n.doubleValue();
+    }
+    return sum;
+}
+You cannot safely add elements (except null) because the exact subtype is unknown.
+ <? super Integer> (Lower Bounded Wildcard)
+
+Meaning:
+The collection can hold objects of Integer or any of its superclasses (Integer, Number, Object).
+
+When to use
+
+When you need to add Integer values
+
+When the method is a producer of data
+
+Example:
+public static void addIntegers(List<? super Integer> list) {
+    list.add(10);
+    list.add(20);
+}
+
+
+Reading returns Object, not a specific numeric type.
+One Practical Use Case for Each
+<? extends Number> – Read-only Processing
+
+Use Case: Calculating average of numbers
+
+List<Double> salaries = Arrays.asList(45000.5, 52000.75);
+double avg = calculateSum(salaries) / salaries.size();
+✔ Works with Integer, Double, Float, etc.
+✔ No modification needed
+
+<? super Integer> – Adding Data
+
+Use Case: Collecting integer IDs
+
+List<Number> ids = new ArrayList<>();
+addIntegers(ids);
+Allows inserting integers safely
+Useful when populating a collection
+
+
+
+2. A)Before records, Java developers used POJOs (Plain Old Java Objects) to represent simple data. This often led to a lot of boilerplate code.
+Problems with traditional POJOs
+
+Need to manually write:
+ i)Constructors
+ ii)Getters
+iii)equals(), hashCode(), toString()
+
+Classes become long and repetitive, Easy to introduce bugs or inconsistencies, Data classes are often mutable, which can cause thread-safety issues
+
+How records solve these problems
+Java records:
+Automatically generate:
+
+i)Constructor
+ii)Accessor methods
+iii)equals(), hashCode(), toString()
+
+Are immutable by default
+Make code concise, readable, and less error-prone
+Clearly express intent: this class is meant to carry data
+
+Example
+
+Traditional POJO
+
+class Employee {
+    private final int id;
+    private final String name;
+
+    public Employee(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+}
+
+
+Using Record
+record Employee(int id, String name) {}
+
+B)  Do not use records when:
+🔹 Objects need to be mutable
+Records have final fields and cannot be changed after creation
+🔹 Complex business logic is required
+Records are meant for data carriers, not rich behavior
+🔹 Inheritance is required
+Records cannot extend other classes (they implicitly extend Record)
+🔹 Frameworks require no-arg constructors or setters
+Some older frameworks (e.g., legacy ORM tools) may not fully support records
+🔹 Encapsulation with controlled mutability is needed
+Records expose all components via public accessors
+
+3. Functional Interface:
+  A functional interface in Java is an interface that contains exactly one abstract method.
+  It may contain:
+One abstract method
+Any number of default methods
+Any number of static methods
+Used mainly to support lambda expressions
+Annotated with @FunctionalInterface (optional but recommended)
+
+@FunctionalInterface
+interface Calculator {
+    int add(int a, int b);
+}
+
+A) Java provides many built-in functional interfaces in the java.util.function package.
+
+Examples:
+Predicate<T>
+Takes one argument
+Returns a boolean
+
+Predicate<Integer> isEven = n -> n % 2 == 0;
+
+
+Function<T, R>
+Takes one argument
+Returns a result
+
+Function<String, Integer> length = s -> s.length();
+
+Other examples: Consumer<T>, Supplier<T>
+
+
+4. A Stream in Java is a sequence of elements that supports functional-style operations for processing data. Streams were introduced in Java 8 to allow developers to work with data in a more declarative and readable way. A stream does not store elements; instead, it takes elements from a data source such as a collection, array, or input/output channel and processes them as per the defined operations.
+
+Streams are different from collections in several ways. A collection is a data structure that stores elements in memory, whereas a stream is used only for processing data. Collections support external iteration where the programmer controls the iteration logic, while streams use internal iteration managed by the Java runtime. Collections can be reused multiple times, but a stream can be consumed only once. Additionally, operations on collections are executed immediately, whereas stream operations are executed lazily.
+
+Stream operations are classified into intermediate operations and terminal operations. Intermediate operations such as filter(), map(), and sorted() return another stream and can be chained together. These operations do not process the data immediately. Terminal operations such as forEach(), collect(), reduce(), and count() produce a result or a side effect and mark the end of the stream pipeline. Once a terminal operation is executed, the stream is closed and cannot be reused.
+
+Streams are considered lazy because intermediate operations are not executed at the time they are defined. Instead, they are executed only when a terminal operation is invoked. Moreover, streams process elements one at a time and only as many elements as required to produce the final result. This lazy evaluation improves performance and reduces unnecessary computations.
+
+5. In Java, the Stream API provides a powerful and expressive way to process collections of objects such as employee records. By using stream operations, we can filter, transform, and group employee data efficiently.
+
+i. Filtering employees by department
+
+To filter employees belonging to a specific department, the filter() intermediate operation is used. This operation selects elements that satisfy a given condition.
+
+List<Employee> itEmployees = employees.stream()
+        .filter(emp -> emp.getDepartment().equals("IT"))
+        .collect(Collectors.toList());
+
+
+Here, only employees whose department is "IT" are selected.
+
+ii. Transforming employee names to uppercase
+
+To transform employee names, the map() intermediate operation is used. It converts each element in the stream to another form.
+
+List<String> employeeNames = employees.stream()
+        .map(emp -> emp.getName().toUpperCase())
+        .collect(Collectors.toList());
+
+
+This converts all employee names into uppercase.
+
+iii. Grouping employees by department
+
+To group employees based on their department, the Collectors.groupingBy() collector is used. It collects elements into a map where the key is the department and the value is a list of employees in that department.
+
+Map<String, List<Employee>> employeesByDept = employees.stream()
+        .collect(Collectors.groupingBy(Employee::getDepartment));
+
+

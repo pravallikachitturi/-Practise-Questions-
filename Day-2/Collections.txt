@@ -1,0 +1,84 @@
+1. A) I would use ArrayList so that order will be preserved and duplicates are allowed.    List<Integer> customerIds = new ArrayList<>();
+    ArrayList preserves insertion order, allows duplicate elements, provides fast access by index and it is most commonly used List implementation.
+customerIds.add(101);
+customerIds.add(102);
+customerIds.add(101); // duplicate allowed
+System.out.println(customerIds); // [101, 102, 101]
+
+   B) If duplicates were NOT allowed I would prefer LinkedHashSet as it maintains insertion order, does not allow duplicates and automatically ignores duplicate entries. 
+	Set<Integer> customerIds = new LinkedHashSet<>();
+
+2. A)Normal collections are not thread-safe because:
+
+🔹 They do not provide synchronization internally
+🔹 Multiple threads can modify the collection at the same time
+🔹 This can cause:
+
+Data inconsistency, Race conditions, Lost updates, Unexpected exceptions (e.g., ConcurrentModificationException), Infinite loops (especially in older HashMap versions)
+List<Integer> list = new ArrayList<>();
+
+// Thread 1
+list.add(1);
+
+// Thread 2
+list.add(2);
+Both threads may try to resize or update the internal array simultaneously, corrupting data.
+
+   B) ConcurrentHashMap is the thread-safe collection in java.
+      Map<Integer, String> map = new ConcurrentHashMap<>();
+   C) Collections.synchronizedList()
+List<Integer> list = Collections.synchronizedList(new ArrayList<>());
+
+ Drawbacks:
+
+Uses a single lock for the entire collection
+
+Only one thread can read or write at a time
+
+Poor performance under high concurrency
+
+🔸 Concurrent Collections (Preferred)
+List<Integer> list = new CopyOnWriteArrayList<>();
+
+Advantages:
+
+Fine-grained locking or lock-free mechanisms
+
+Allows multiple threads to read/write concurrently
+
+Better performance in high-traffic, multi-threaded systems
+
+Safer iteration without ConcurrentModificationException
+
+3.  When an ArrayList is created with an initial value of 25, this value represents the initial capacity of the internal array, not the number of elements stored in it. The capacity indicates how many elements the ArrayList can hold before it needs to resize.
+
+As elements are added up to the 25th element, they are stored directly in the existing internal array and no resizing occurs. The insertion operation during this phase is fast and efficient.
+
+When the 26th element is added, the current capacity is exceeded. At this point, the ArrayList automatically resizes its internal array. Internally, Java creates a new array with a larger capacity, which is approximately 1.5 times the original capacity. For an initial capacity of 25, the new capacity becomes around 37. All existing 25 elements are then copied into the new array, and the 26th element is added to it. The old array is discarded and later garbage collected.
+
+This resizing operation involves copying elements, which has a time complexity of O(n). However, since resizing does not happen on every insertion, the overall time complexity of adding elements to an ArrayList remains amortized O(1).
+
+4. import java.util.*;
+
+public class EmployeeNames {
+
+    public static void main(String[] args) {
+
+        List<String> names = Arrays.asList(
+                "John", "Alice", "john", "Bob", "Alice", "BOB"
+        );
+
+        Map<String, String> uniqueNames = new LinkedHashMap<>();
+
+        for (String name : names) {
+            String key = name.toLowerCase();
+            uniqueNames.putIfAbsent(key, name);
+        }
+
+        // Print unique employee names
+        for (String name : uniqueNames.values()) {
+            System.out.println(name);
+        }
+    }
+}
+

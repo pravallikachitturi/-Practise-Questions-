@@ -1,0 +1,126 @@
+A) No, balance should not be public. If  Balance is public anyone can modify it directly. Making balance private ensures data safety, controlled access, no valid updates.
+   B) We control all changes to balance through methods, not direct access.
+	public void deposit(double amount) {
+    if (amount > 0) {
+        balance += amount;
+    } else {
+        System.out.println("Invalid deposit amount");
+    }
+}
+ rules enforced are Deposit must be positive, Balance updated safely.
+
+Withdraw method: public void withdraw(double amount) {
+    if (amount > 0 && amount <= balance) {
+        balance -= amount;
+    } else {
+        System.out.println("Insufficient balance or invalid amount");
+    }
+}
+
+  C) Encapsulation means a combination of Data hiding and controlled access, the fields are        private and we can access it through public methods. It ensures that there is no negative balance by enforcing the validation in the withdraw method.
+
+2. A) If a withdrawal fails due to insufficient balance then i will use an unchecked exception(Runtime Exception) because Insufficient balance is a business rule violation, not a system failure, it can happen at runtime based on user input and forcing callers to catch it (checked exception) makes the code noisy and less clean.
+   B) Exception handling is critical because it prevents application crashes, handles invalid operations gracefully, separates normal flow from error flow, improves system reliability and user experience.
+   C) Custom exception improves code clarity as it clearly tells what went wrong, improves readability and maintainability, makes debugging easier, can be handled separately in controller or service layers. ex: throw new InsufficientBalanceException("Available balance is low");
+
+3. A) Both PhysicalProduct and DigitalProduct are still products, so they share several common behaviors that should be abstracted. Common attributes: productId, name, price, description. Common behaviors (methods): getPrice() – return product price, applyDiscount() – apply offer/discount, calculateTax() – compute applicable tax, purchase() – common purchase logic.
+   B) I would use an abstract class as both product types share state,it provides partial implementation, avoids code duplication
+Abstract Product class:
+public abstract class Product {
+
+    protected String productId;
+    protected String name;
+    protected double price;
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void applyDiscount(double percentage) {
+        price -= price * (percentage / 100);
+    }
+
+    public abstract double calculateTax();
+    public abstract void deliver();
+}
+
+PhysicalProduct:
+ public class PhysicalProduct extends Product {
+
+    private double weight;
+
+    @Override
+    public double calculateTax() {
+        return price * 0.12;
+    }
+
+    @Override
+    public void deliver() {
+        System.out.println("Shipping the product");
+    }
+}
+DigitalProduct: public class DigitalProduct extends Product {
+
+    @Override
+    public double calculateTax() {
+        return price * 0.05;
+    }
+
+    @Override
+    public void deliver() {
+        System.out.println("Providing download link");
+    }
+}
+
+4. Polymorphism means many-forms. The same method name to behave differently. It has one interface but multiple implementations
+example:pay() → Credit Card / UPI / NetBanking
+  A) Compile-Time Polymorphism is also called as static polymorphism. It is achieved using method overloading. Method resolution happens at compile time, it has same method name but different parameters. ex:class Calculator {
+    int add(int a, int b) {
+        return a + b;
+    }
+
+    double add(double a, double b) {
+        return a + b;
+    }
+}   
+   Runtime Polymorphism also called as dynamic polymorphism and it achieved using method overriding. Method resolution happens at runtime, Actual object decides which method runs.
+ Ex: class Account {
+    void withdraw() {
+        System.out.println("Account withdrawal");
+    }
+}
+
+class SavingsAccount extends Account {
+    @Override
+    void withdraw() {
+        System.out.println("Savings account withdrawal");
+    }
+}
+
+Account acc = new SavingsAccount();
+acc.withdraw();   // Calls SavingsAccount version
+
+B)  Runtime Polymorphism is achieved using method overriding as Overridden method is selected at runtime ,based on the actual object, not the reference type
+
+C)  🔹 Flexibility
+
+Same code works with different objects
+
+🔹 Loose coupling
+
+Code depends on parent class/interface
+
+Implementation can change without affecting code
+
+🔹 Scalability
+
+New child classes can be added without modifying existing code
+
+🔹 Supports SOLID principles
+
+   Especially Open–Closed Principle
+
+
+
+
+

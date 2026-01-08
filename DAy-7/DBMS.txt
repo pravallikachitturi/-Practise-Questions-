@@ -1,0 +1,191 @@
+Q1. Modeling Orders, OrderItems, and Users in Spring Boot (JPA)
+Which JPA relationships would you use and why?
+
+User → Order: OneToMany
+
+One user can place multiple orders.
+
+Order → User: ManyToOne
+
+Each order belongs to exactly one user.
+
+Order → OrderItem: OneToMany
+
+One order can contain multiple order items.
+
+OrderItem → Order: ManyToOne
+
+Each order item belongs to a single order.
+
+This design follows relational database normalization and supports efficient querying.
+
+How do you handle cascading and orphan removal for OrderItems?
+
+Cascade ensures child entities are persisted or removed automatically.
+
+Orphan removal deletes child records when they are removed from the parent collection.
+
+Example:
+
+@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<OrderItem> items;
+
+
+This ensures:
+
+OrderItems are saved when an Order is saved
+
+OrderItems are deleted when removed from the Order
+
+How would you enforce order status transitions at the entity level?
+
+Use:
+
+An enum for order status
+
+Business logic methods to validate transitions
+
+Example:
+
+public void markAsPaid() {
+    if (this.status != OrderStatus.PENDING) {
+        throw new IllegalStateException("Invalid status transition");
+    }
+    this.status = OrderStatus.PAID;
+}
+
+
+This prevents invalid transitions like SHIPPED → PENDING.
+
+What annotations are essential for entity mapping?
+
+@Entity – Marks the class as a JPA entity
+
+@Table – Maps entity to database table
+
+@Id – Primary key
+
+@GeneratedValue – Auto ID generation
+
+@JoinColumn – Defines foreign key column
+
+@Enumerated(EnumType.STRING) – Stores enum as readable text
+
+Q2. Handling Concurrency and Transactions in E-commerce
+How do you define transaction boundaries using @Transactional?
+
+@Transactional ensures that all database operations within a method are executed as a single atomic transaction.
+
+Example:
+
+@Transactional
+public void placeOrder(Long productId) { }
+
+
+If an exception occurs, the transaction is rolled back automatically.
+
+Which isolation level would you choose and why?
+
+READ COMMITTED
+
+Prevents dirty reads
+
+Better performance
+
+Suitable for most e-commerce use cases
+
+SERIALIZABLE
+
+Prevents phantom reads
+
+Strong consistency
+
+Lower performance, higher locking
+
+Most systems prefer READ COMMITTED combined with locking.
+
+Optimistic vs Pessimistic locking – which one and how?
+
+Optimistic Locking
+
+Best for low-contention scenarios
+
+Implemented using @Version
+
+@Version
+private Long version;
+
+
+Pessimistic Locking
+
+Used when contention is high
+
+Locks rows at database level
+
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+
+
+Optimistic locking is generally preferred for scalability.
+
+How do you handle deadlocks or retries gracefully?
+
+Catch lock-related exceptions
+
+Retry transactions using retry mechanisms
+
+Keep transactions short
+
+Use proper indexing
+
+Spring Retry or Resilience patterns help in graceful recovery.
+
+Q3. Implementing Auditing in JPA Entities
+Which annotations and listeners help with auditing?
+
+Spring Data JPA provides:
+
+@CreatedDate
+
+@LastModifiedDate
+
+@CreatedBy
+
+@LastModifiedBy
+
+@EntityListeners(AuditingEntityListener.class)
+
+These automatically populate audit fields.
+
+How do you integrate Spring Security context for auditing?
+
+Implement AuditorAware<T>
+
+Fetch the current user from SecurityContextHolder
+
+Example:
+
+public class AuditorAwareImpl implements AuditorAware<String> {
+    public Optional<String> getCurrentAuditor() {
+        return Optional.of(SecurityContextHolder.getContext()
+                .getAuthentication().getName());
+    }
+}
+
+What are the limitations with detached entities?
+
+Auditing works only when entities are managed
+
+Detached entities updated outside a transaction will not trigger auditing
+
+Must merge entities back into persistence context
+
+How do you enable JPA auditing globally?
+
+Use @EnableJpaAuditing in a configuration or main application class.
+
+@EnableJpaAuditing
+@SpringBootApplication
+public class Application { }
+
+
+This enables auditing across all entities.

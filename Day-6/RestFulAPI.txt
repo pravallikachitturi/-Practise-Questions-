@@ -1,0 +1,240 @@
+Q1. Designing a Product Service with Clean REST APIs
+Why use DTOs instead of entities? How do you map between them?
+
+DTOs (Data Transfer Objects) are used to avoid exposing internal JPA entities directly through APIs.
+
+Reasons for using DTOs:
+
+Prevents tight coupling between API and database schema
+
+Improves security by hiding sensitive fields
+
+Allows API contracts to evolve independently
+
+Avoids issues with lazy loading and bidirectional relationships
+
+Mapping between entities and DTOs can be done using:
+
+Manual mapping
+
+Utility methods
+
+Mapping frameworks (e.g., ModelMapper, MapStruct)
+
+Example (manual mapping):
+
+ProductDTO dto = new ProductDTO();
+dto.setName(product.getName());
+dto.setPrice(product.getPrice());
+
+Where should validation occur—controller or service?
+
+Basic input validation (null checks, format checks) should occur at the controller level using DTOs.
+
+Business validations (cross-field rules, domain logic) should occur in the service layer.
+
+This ensures early rejection of bad input while keeping business logic centralized.
+
+How do you keep controllers thin and services fat?
+
+Controllers should:
+
+Accept requests
+
+Validate input
+
+Delegate work to services
+
+Return responses
+
+Services should:
+
+Contain business logic
+
+Handle transactions
+
+Coordinate repositories and external services
+
+This separation improves maintainability, testability, and scalability.
+
+Which annotations are essential for clean API design?
+
+@RestController – Defines REST APIs and returns JSON
+
+@RequestMapping – Base URL mapping
+
+@GetMapping, @PostMapping, @PutMapping, @DeleteMapping – HTTP methods
+
+@RequestParam – Query parameters
+
+@PathVariable – URL path variables
+
+@RequestBody – Request payload
+
+Q2. Error Handling, API Stability, and Contracts
+How do you implement global error handling?
+
+Global error handling is implemented using @ControllerAdvice combined with @ExceptionHandler.
+
+Benefits:
+
+Centralized exception handling
+
+Consistent error responses
+
+Cleaner controllers
+
+Example:
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(...));
+    }
+}
+
+What should a standard error payload include?
+
+A standard error response should include:
+
+timestamp
+
+HTTP status code
+
+error message
+
+request path
+
+optional error details
+
+This helps clients debug issues efficiently.
+
+How do you plan API versioning and deprecation?
+
+Common API versioning strategies:
+
+URI versioning: /api/v1/products
+
+Header-based versioning
+
+Media type versioning
+
+For deprecation:
+
+Maintain older versions temporarily
+
+Mark endpoints as deprecated
+
+Provide clear migration timelines
+
+Avoid breaking changes in existing versions
+
+How do you return custom HTTP status codes?
+
+ResponseEntity allows full control over response body and status code.
+
+Example:
+
+return ResponseEntity.status(HttpStatus.CREATED).body(productDto);
+
+Q3. Idempotency, Resilience, and Distributed Systems
+How do you implement idempotency keys and deduplication?
+
+Idempotency ensures repeated requests produce the same result.
+
+Approach:
+
+Accept an idempotency key in request headers
+
+Store processed keys in a database or cache
+
+Reject or reuse responses for duplicate keys
+
+This prevents duplicate resource creation.
+
+How do you add retries, timeouts, and circuit breakers?
+
+Using Resilience4j:
+
+Retry: handles transient failures
+
+Timeout: prevents long waits
+
+Circuit breaker: prevents cascading failures
+
+Configured using annotations or application configuration.
+
+How do you return 202 Accepted for async operations?
+
+For long-running operations:
+
+Return 202 Accepted
+
+Provide a status endpoint for polling
+
+Or notify clients using webhooks or messaging
+
+This improves responsiveness and scalability.
+
+How do you handle partial failures gracefully?
+
+Strategies include:
+
+Compensating transactions
+
+Graceful degradation
+
+Clear error reporting
+
+Retry only failed components
+
+These patterns are essential in microservice architectures.
+
+Q4. Backend Validations for POST APIs
+Why are validations critical?
+
+Validations:
+
+Protect against invalid or malicious input
+
+Maintain data integrity
+
+Reduce downstream failures
+
+Improve API reliability
+
+How do you use @Valid and constraint annotations?
+
+DTOs are annotated with constraints and validated using @Valid.
+
+Example:
+
+public class UserDTO {
+    @NotBlank
+    private String name;
+
+    @Size(min = 10, max = 10)
+    private String phone;
+}
+
+
+Controller usage:
+
+@PostMapping("/users")
+public ResponseEntity<?> createUser(@Valid @RequestBody UserDTO dto) { }
+
+How do you propagate validation errors?
+
+Validation failures throw MethodArgumentNotValidException, which is handled globally using @ControllerAdvice.
+
+Errors are returned in a structured format with field-level messages.
+
+What happens if validation fails?
+
+Spring automatically stops request processing
+
+Returns 400 Bad Request
+
+Custom error responses can be returned by handling validation exceptions globally

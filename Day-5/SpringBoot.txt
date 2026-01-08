@@ -1,0 +1,233 @@
+Q1. Migrating a Monolithic Application to Microservices using Spring Boot
+How does auto-configuration simplify bean creation compared to manual XML configs?
+
+In traditional Spring applications, developers had to explicitly define beans and their dependencies using large XML configuration files, which were verbose and error-prone.
+
+Spring Boot simplifies this using auto-configuration, which automatically configures beans based on:
+
+Classpath dependencies
+
+Starter modules
+
+Application properties
+
+By simply adding starter dependencies (like spring-boot-starter-web or spring-boot-starter-data-jpa), Spring Boot automatically creates and wires beans such as DataSource, EntityManagerFactory, DispatcherServlet, etc., without manual XML.
+
+The @SpringBootApplication annotation internally combines:
+
+@Configuration
+
+@EnableAutoConfiguration
+
+@ComponentScan
+
+Auto-configuration relies on conditional annotations such as:
+
+@ConditionalOnClass
+
+@ConditionalOnMissingBean
+
+@ConditionalOnProperty
+
+This approach reduces boilerplate and speeds up microservice development and deployments.
+
+When would you exclude an auto-configuration class? Give an example.
+
+You exclude an auto-configuration class when:
+
+You want full manual control over a configuration
+
+Spring Boot’s default behavior conflicts with custom requirements
+
+An unwanted auto-configured bean is created
+
+Example: Excluding DataSource auto-configuration when managing database configuration manually.
+
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+public class MyApp {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApp.class, args);
+    }
+}
+
+How do you activate profile-specific beans?
+
+Spring profiles allow environment-specific beans and configurations.
+
+Profiles can be activated using:
+
+spring.profiles.active=dev in application.properties
+
+JVM argument: -Dspring.profiles.active=prod
+
+Environment variable
+
+Beans are made profile-specific using @Profile.
+
+@Profile("dev")
+@Component
+public class DevDataSourceConfig { }
+
+Q2. Core Spring Boot Concepts
+What is Dependency Injection (DI), and how does it reduce coupling?
+
+Dependency Injection is a design pattern where objects do not create their dependencies but receive them from the Spring container.
+
+Benefits:
+
+Reduces tight coupling
+
+Improves testability
+
+Enables easier replacement of implementations
+
+Spring manages object creation and dependency wiring at runtime.
+
+Explain the roles of common annotations and component scanning
+
+@Component – Generic stereotype for any Spring-managed bean
+
+@Service – Business logic layer
+
+@Repository – Data access layer; also enables exception translation
+
+@Controller – Handles web requests (returns views)
+
+@RestController – REST APIs; combines @Controller and @ResponseBody
+
+Spring uses component scanning (via @ComponentScan) to detect these annotations and register beans automatically.
+
+@Autowired vs Constructor Injection (Why constructor injection is preferred)
+
+@Autowired injects dependencies automatically
+
+Constructor injection injects dependencies through constructors
+
+Constructor injection is preferred because:
+
+Ensures immutability
+
+Makes dependencies mandatory
+
+Easier unit testing
+
+Avoids NullPointerExceptions
+
+@Service
+public class UserService {
+    private final UserRepository repo;
+
+    public UserService(UserRepository repo) {
+        this.repo = repo;
+    }
+}
+
+How do @Qualifier and @Primary resolve bean ambiguity?
+
+When multiple beans of the same type exist:
+
+@Primary marks a default bean
+
+@Qualifier explicitly selects a bean
+
+Example:
+
+@Primary
+@Component
+class EmailService implements NotificationService { }
+
+@Component
+class SmsService implements NotificationService { }
+
+@Autowired
+@Qualifier("smsService")
+private NotificationService service;
+
+Q3. Externalizing Configuration and Managing Secrets
+How do application.yml and profile-specific configs work together?
+
+Spring Boot loads configuration in this order:
+
+application.yml
+
+application-{profile}.yml
+
+Profile-specific files override default values.
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost/devdb
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://prod-db/proddb
+
+What’s a secure approach for managing secrets in Spring Boot?
+
+Secure approaches include:
+
+Environment variables
+
+External configuration servers
+
+Cloud secret managers
+
+Encrypted property values
+
+Avoid storing secrets in source code or Git repositories.
+
+How would you structure configs for multi-region deployments?
+
+Best practices:
+
+Common configs in base application.yml
+
+Region-specific overrides using profiles (e.g., us-east, apac)
+
+Externalized configuration sources
+
+Region-specific secrets managed outside the application
+
+Q4. Scheduled Batch Job with Graceful Shutdown
+Which annotations enable scheduling? How do you restrict it to certain profiles?
+
+@EnableScheduling enables scheduling
+
+@Scheduled defines cron or fixed-rate jobs
+
+@Profile restricts execution to specific environments
+
+@Profile("batch")
+@Component
+public class JobScheduler {
+
+    @Scheduled(fixedRate = 10000)
+    public void runJob() { }
+}
+
+Which lifecycle hooks help with graceful shutdown?
+
+@PreDestroy
+
+DisposableBean
+
+Shutdown hooks provided by Spring Boot
+
+These ensure cleanup and job completion during scale-down.
+
+How would you monitor this job using Actuator?
+
+Spring Boot Actuator provides:
+
+/actuator/health
+
+/actuator/metrics
+
+/actuator/scheduledtasks
+
+/actuator/loggers
+
+Custom metrics can be added to monitor execution time, failures, and invocation count.
